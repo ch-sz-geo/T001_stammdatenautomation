@@ -1,0 +1,21 @@
+= Dateibeschreibung
+
+Bei der Bewirtschaftung eines Themas gibt es Attribute, deren Werte nicht frei erfasst, sondern aus einem vorgegebenen Katalog selektiert werden müssen (z.B. Gemeindenamen aus dem Katalog der Schwyzer Gemeinden). Die Gesamtheit der Kataloge eines Themas wird als "Stammdaten" bezeichnet. Sie werden in einer eigenen Datei gehalten (`+Stammdaten.xtf+`) und bilden eine Voraussetzung für die Datenerfassung.
+
+Änderungen am Datenmodell und/oder Änderungen an den Stammdaten führen zu Anpassungen in der Datei `+Stammdaten.xtf+`. Die nachfolgende Tabelle zeigt, welche Stammdaten bei welchem Datenmodell zu verwenden sind.
+
+[cols="30%, 20%, 40%, 10%",options="header"]
+|===
+| Modell +
+(Version) | gültig ab | Beschreibung | Link
+| Beispiel_Modell_V1 +
+(2000-01-01)
+| 2001-01-01
+| Diese Datei enthält die aktuell gültigen Stammdaten für die Datenerfassung.
+| https://raw.githubusercontent.com/ch-sz-geo/A026/7d038975228cc1dadba83475fcdebe8459195881/data/Stammdaten.xtf[*Datei*]
+| Beispiel_Modell_V1 +
+(1990-01-01)
+| 1991-01-01
+| Diese Datei enthält die Stammdaten der Modellversion V1. Sie wurde aus der internen Dateiablage hochgeladen, damit die Historie über GitHub vorhanden ist. In dieser Dateiversion fehlt die Versionskennung bei der Stammdaten-BID. 
+| https://raw.githubusercontent.com/ch-sz-geo/A026/c76e0d5f58182e4473d1c72f48dc913b7ff4e5cd/data/Stammdaten.xtf[*Datei*]
+|===

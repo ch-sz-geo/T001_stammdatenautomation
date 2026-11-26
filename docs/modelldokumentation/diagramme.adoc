@@ -1,0 +1,12 @@
+== Diagramme
+=== [todo] Komponentendiagramm
+image::../img/Komponentendiagramm.jpg[]
+
+=== [todo] Klassendiagramm
+image::../img/Klassendiagramm.jpg[]
+
+image::../img/Legende Klassendiagramm Variante 1.jpg[width=350]
+
+ifdef::backend-pdf[]
+<<<
+endif::[]
