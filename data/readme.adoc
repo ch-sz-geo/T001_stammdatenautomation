@@ -8,6 +8,11 @@ Bei der Bewirtschaftung eines Themas gibt es Attribute, deren Werte nicht frei e
 |===
 | Modell +
 (Version) | gültig ab | Beschreibung | Link
+| SZ_Oekomorphologie_Fliessgewaesser_V2 +
+(2025-10-25)
+| 2026-11-26
+| Diese Datei enthält die Stammdaten des Datenmodells SZ_Oekomorphologie_Fliessgewaesser_V2 (Version 2025-10-25).
+| https://raw.githubusercontent.com/ch-sz-geo/T001_stammdatenautomation/9c384eeba71354789304fcdec5eb42b9669405c4/data/stammdaten.xtf[*Datei*]
 | SZ_Oekomorphologie_Fliessgewaesser_V1 +
 (2024-07-24)
 | 2026-11-26
