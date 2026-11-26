@@ -2,7 +2,7 @@
 <TRANSFER xmlns="http://www.interlis.ch/INTERLIS2.3">
 <HEADERSECTION SENDER="AGI SZ: FME, Python" VERSION="2.3">
  <MODELS>
-  <MODEL NAME="SZ_Oekomorphologie_Fliessgewaesser_V1_1" VERSION="2024-07-24" URI="http://models.geo.sz.ch"></MODEL>
+  <MODEL NAME="SZ_Oekomorphologie_Fliessgewaesser_V2" VERSION="2024-07-24" URI="http://models.geo.sz.ch"></MODEL>
  </MODELS>
 </HEADERSECTION>
 <DATASECTION>
