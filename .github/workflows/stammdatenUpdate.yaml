@@ -1,0 +1,29 @@
+name: Detect Stammdaten Changes
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'models/**'
+
+jobs:
+  update-daten-readme:
+    runs-on: ubuntu-slim
+
+    steps:
+      - name: Checkout Branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref}}
+      - name: Read model name and version
+        id: model
+        run: |
+          NAME=$(xmllint --xpath 'string(//*[local-name()="MODEL"]/@NAME)' path/to/file.xml)
+          VERSION=$(xmllint --xpath 'string(//*[local-name()="MODEL"]/@VERSION)' path/to/file.xml)
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      
+      - name: Use it
+        run: echo "Model ${{ steps.model.outputs.name }} @ ${{ steps.model.outputs.version }}"
+              
+      
