@@ -7,6 +7,7 @@ on:
   pull_request:
     paths:
       - "data/stammdaten.xtf"
+  workflow_dispatch:
 
 env:
   XTF_FILE: data/stammdaten.xtf
@@ -70,10 +71,11 @@ jobs:
 
           if diff -u previous.txt current.txt > model.diff; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "Model name/version unchanged." | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "**Model name/version is unchanged compared to the prior commit.**" >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::Model name and version are unchanged compared to the prior commit (HEAD~1)"
+            exit 1
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "::warning::Model name and/or version changed compared to prior commit"
             {
               echo "**Model name/version changed:**"
               echo '```diff'
