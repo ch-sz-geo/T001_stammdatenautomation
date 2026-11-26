@@ -9,8 +9,13 @@ on:
       - "data/stammdaten.xtf"
   workflow_dispatch:
 
+permissions:
+  contents: write   # needed to commit the updated AsciiDoc
+
 env:
   XTF_FILE: data/stammdaten.xtf
+  ADOC_FILE: README.adoc          # <- path of the AsciiDoc containing the table
+  ROW_DESCRIPTION: "Diese Datei enthält die Stammdaten des Datenmodells {model} (Version {version})."
 
 jobs:
   compare-model:
@@ -47,29 +52,29 @@ jobs:
             exit 1
           fi
 
-          extract_models < "$XTF_FILE" | sort > current.txt
+          extract_models < "$XTF_FILE" | sort > "$RUNNER_TEMP/current.txt"
 
           if git rev-parse --verify -q HEAD~1 >/dev/null \
              && git cat-file -e "HEAD~1:$XTF_FILE" 2>/dev/null; then
-            git show "HEAD~1:$XTF_FILE" | extract_models | sort > previous.txt
+            git show "HEAD~1:$XTF_FILE" | extract_models | sort > "$RUNNER_TEMP/previous.txt"
           else
             echo "::notice::No prior version of $XTF_FILE found; treating as new file"
-            : > previous.txt
+            : > "$RUNNER_TEMP/previous.txt"
           fi
 
-          echo "Previous commit:"; cat previous.txt
-          echo "Current commit:";  cat current.txt
+          echo "Previous commit:"; cat "$RUNNER_TEMP/previous.txt"
+          echo "Current commit:";  cat "$RUNNER_TEMP/current.txt"
 
           {
             echo "### XTF model comparison (\`$XTF_FILE\`)"
             echo
             echo "| | Previous (HEAD~1) | Current (HEAD) |"
             echo "|---|---|---|"
-            echo "| Model(s) | $(sed 's/ / v/' previous.txt | paste -sd, - | sed 's/,/, /g') | $(sed 's/ / v/' current.txt | paste -sd, - | sed 's/,/, /g') |"
+            echo "| Model(s) | $(sed 's/ / v/' "$RUNNER_TEMP/previous.txt" | paste -sd, - | sed 's/,/, /g') | $(sed 's/ / v/' "$RUNNER_TEMP/current.txt" | paste -sd, - | sed 's/,/, /g') |"
             echo
           } >> "$GITHUB_STEP_SUMMARY"
 
-          if diff -u previous.txt current.txt > model.diff; then
+          if diff -u "$RUNNER_TEMP/previous.txt" "$RUNNER_TEMP/current.txt" > "$RUNNER_TEMP/model.diff"; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "**Model name/version is unchanged compared to the prior commit.**" >> "$GITHUB_STEP_SUMMARY"
             echo "::error::Model name and version are unchanged compared to the prior commit (HEAD~1)"
@@ -79,7 +84,85 @@ jobs:
             {
               echo "**Model name/version changed:**"
               echo '```diff'
-              cat model.diff
+              cat "$RUNNER_TEMP/model.diff"
               echo '```'
             } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Append row to table in AsciiDoc
+        # Only on real pushes (a PR checkout is a detached merge commit we cannot push to)
+        if: github.event_name != 'pull_request' && steps.compare.outputs.changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          export VALID_FROM="$(git show -s --format=%cs HEAD)"   # commit date, YYYY-MM-DD
+          export FILE_URL="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_SHA}/${XTF_FILE}"
+          export MODELS_FILE="$RUNNER_TEMP/current.txt"
+
+          python3 - <<'PY'
+          import os, re, sys
+
+          adoc = os.environ["ADOC_FILE"]
+          url = os.environ["FILE_URL"]
+          valid_from = os.environ["VALID_FROM"]
+
+          models = []
+          for line in open(os.environ["MODELS_FILE"], encoding="utf-8").read().splitlines():
+              if not line.strip():
+                  continue
+              parts = line.split(" ", 1)
+              models.append((parts[0], parts[1] if len(parts) > 1 else ""))
+
+          with open(adoc, encoding="utf-8") as f:
+              text = f.read()
+
+          if url in text:
+              print("Row for this commit already present, nothing to do.")
+              sys.exit(0)
+
+          model_cell = " +\n".join(f"{n} +\n({v})" for n, v in models)
+          description = os.environ["ROW_DESCRIPTION"].format(
+              model=", ".join(n for n, _ in models),
+              version=", ".join(v for _, v in models),
+          )
+          row = (
+              f"| {model_cell}\n"
+              f"| {valid_from}\n"
+              f"| {description}\n"
+              f"| {url}[*Datei*]\n"
+          )
+
+          lines = text.splitlines(keepends=True)
+          start = next(i for i, l in enumerate(lines) if l.strip() == "|===")  # opening table delimiter
+
+          # number of columns from [cols="..."] above the table (fallback: 4)
+          ncols = 4
+          if start > 0:
+              m = re.search(r'cols="([^"]*)"', lines[start - 1])
+              if m:
+                  ncols = len(m.group(1).split(","))
+
+          # skip the header row (it may span several lines): count cell separators
+          pos, seen = start + 1, 0
+          while pos < len(lines) and seen < ncols:
+              seen += lines[pos].count("|")
+              pos += 1
+
+          lines.insert(pos, row)  # newest entry directly below the header
+
+          with open(adoc, "w", encoding="utf-8") as f:
+              f.write("".join(lines))
+          print(f"Appended row to {adoc}")
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$ADOC_FILE"
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Dateibeschreibung: Modellversion aus ${XTF_FILE} ergänzt"
+            git pull --rebase
+            git push
           fi
