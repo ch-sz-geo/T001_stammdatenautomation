@@ -24,8 +24,8 @@ jobs:
         run: |
           ls -la data
           
-          NAME=$(xmllint --xpath 'string(//*[local-name()="MODEL"]/@NAME)' ‎data/Stammdaten.xtf)
-          VERSION=$(xmllint --xpath 'string(//*[local-name()="MODEL"]/@VERSION)' data/Stammdaten.xtf)
+          NAME=$(xmllint --xpath 'string(//*[local-name()="MODEL"]/@NAME)' ‎data/stammdaten.xtf)
+          VERSION=$(xmllint --xpath 'string(//*[local-name()="MODEL"]/@VERSION)' data/stammdaten.xtf)
           echo "name=$NAME" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       
