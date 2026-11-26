@@ -22,14 +22,8 @@ jobs:
       - name: Read model name and version
         id: model
         run: |
-          ls -la data
-          
-          NAME=$(xmllint --xpath 'string(//*[local-name()="MODEL"]/@NAME)' ‎data/stammdaten.xtf)
-          VERSION=$(xmllint --xpath 'string(//*[local-name()="MODEL"]/@VERSION)' data/stammdaten.xtf)
+          FILE="data/stammdaten.xtf"
+          NAME=$(xmllint --xpath 'string(//*[local-name()="MODEL"]/@NAME)' "$FILE")
+          VERSION=$(xmllint --xpath 'string(//*[local-name()="MODEL"]/@VERSION)' "$FILE")
           echo "name=$NAME" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-      
-      - name: Use it
-        run: echo "Model ${{ steps.model.outputs.name }} @ ${{ steps.model.outputs.version }}"
-              
-      
