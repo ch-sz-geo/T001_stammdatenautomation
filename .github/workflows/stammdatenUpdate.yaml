@@ -22,7 +22,7 @@ jobs:
       - name: Read model name and version
         id: model
         run: |
-          NAME=$(xmllint --xpath 'string(//*[local-name()="MODEL"]/@NAME)' path/to/file.xml)
+          NAME=$(xmllint --xpath 'string(//*[local-name()="MODEL"]/@NAME)' ‎data/Stammdaten.xtf)
           VERSION=$(xmllint --xpath 'string(//*[local-name()="MODEL"]/@VERSION)' ‎data/Stammdaten.xtf)
           echo "name=$NAME" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
