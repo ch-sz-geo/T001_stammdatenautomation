@@ -7,7 +7,6 @@
 </HEADERSECTION>
 <DATASECTION>
 <SZ_Oekomorphologie_Fliessgewaesser_V1_1.Stammdaten BID="SZ_Oekomorphologie_Fliessgewaesser_V1_1.Stammdaten.2000-01-01">
-    <SZ_Oekomorphologie_Fliessgewaesser_V1_1.Stammdaten.Absturzmaterial TID="c9b38e57-e15c-439b-bbf9-86737b2c8b01"><Name>Beton, Steinpflästerung</Name><Code>AbsturzMaterial4</Code><SortierNr>4</SortierNr><Bemerkung></Bemerkung></SZ_Oekomorphologie_Fliessgewaesser_V1_1.Stammdaten.Absturzmaterial>
     <SZ_Oekomorphologie_Fliessgewaesser_V1_1.Stammdaten.Absturzmaterial TID="f3035c8f-cb8c-46f5-8ff4-b23453082ca1"><Name>Fels, Steinblöcke</Name><Code>AbsturzMaterial3</Code><SortierNr>3</SortierNr><Bemerkung></Bemerkung></SZ_Oekomorphologie_Fliessgewaesser_V1_1.Stammdaten.Absturzmaterial>
     <SZ_Oekomorphologie_Fliessgewaesser_V1_1.Stammdaten.Absturzmaterial TID="461ff699-e6c5-42c2-b0a1-e90d13c7354c"><Name>natürlich, kein</Name><Code>AbsturzMaterial1</Code><SortierNr>1</SortierNr><Bemerkung></Bemerkung></SZ_Oekomorphologie_Fliessgewaesser_V1_1.Stammdaten.Absturzmaterial>
     <SZ_Oekomorphologie_Fliessgewaesser_V1_1.Stammdaten.Absturzmaterial TID="85bb6ea7-c693-4503-828d-34145c6d1fad"><Name>andere, unbekannt</Name><Code>AbsturzMaterial5</Code><SortierNr>5</SortierNr><Bemerkung></Bemerkung></SZ_Oekomorphologie_Fliessgewaesser_V1_1.Stammdaten.Absturzmaterial>
