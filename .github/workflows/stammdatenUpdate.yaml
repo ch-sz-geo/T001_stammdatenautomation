@@ -2,28 +2,83 @@ name: Detect Stammdaten Changes
 
 on:
   push:
-    branches: [main, master]
     paths:
-      - 'models/**'
-  workflow_dispatch: 
+      - "data/stammdaten.xtf"
+  pull_request:
+    paths:
+      - "data/stammdaten.xtf"
+  workflow_dispatch:
 
+env:
+  XTF_FILE: data/stammdaten.xtf
 
 jobs:
-  update-daten-readme:
+  compare-model:
     runs-on: ubuntu-latest
-
+    outputs:
+      changed: ${{ steps.compare.outputs.changed }}
     steps:
-      - name: Checkout Branch
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref}}
-      - name: Install xmllint
-        run: sudo apt-get update && sudo apt-get install -y libxml2-utils
-      - name: Read model name and version
-        id: model
+          fetch-depth: 2   # current + prior commit
+
+      - name: Compare model name/version with prior commit
+        id: compare
+        shell: bash
         run: |
-          FILE="data/stammdaten.xtf"
-          NAME=$(xmllint --xpath 'string(//*[local-name()="MODEL"]/@NAME)' "$FILE")
-          VERSION=$(xmllint --xpath 'string(//*[local-name()="MODEL"]/@VERSION)' "$FILE")
-          echo "name=$NAME"
-          echo "version=$VERSION"
+          set -euo pipefail
+
+          # Prints one "NAME VERSION" line per <MODEL> in HEADERSECTION/MODELS
+          # (namespace-agnostic, so INTERLIS 2.3 and 2.4 transfer files both work)
+          extract_models() {
+            python3 -c '
+          import sys
+          import xml.etree.ElementTree as ET
+
+          root = ET.parse(sys.stdin).getroot()
+          for el in root.iter():
+              if el.tag.split("}")[-1] == "MODEL":
+                  print(el.get("NAME", ""), el.get("VERSION", ""))
+          '
+          }
+
+          if [ ! -f "$XTF_FILE" ]; then
+            echo "::error::$XTF_FILE not found in current commit"
+            exit 1
+          fi
+
+          extract_models < "$XTF_FILE" | sort > current.txt
+
+          if git rev-parse --verify -q HEAD~1 >/dev/null \
+             && git cat-file -e "HEAD~1:$XTF_FILE" 2>/dev/null; then
+            git show "HEAD~1:$XTF_FILE" | extract_models | sort > previous.txt
+          else
+            echo "::notice::No prior version of $XTF_FILE found; treating as new file"
+            : > previous.txt
+          fi
+
+          echo "Previous commit:"; cat previous.txt
+          echo "Current commit:";  cat current.txt
+
+          {
+            echo "### XTF model comparison (\`$XTF_FILE\`)"
+            echo
+            echo "| | Previous (HEAD~1) | Current (HEAD) |"
+            echo "|---|---|---|"
+            echo "| Model(s) | $(sed 's/ / v/' previous.txt | paste -sd, - | sed 's/,/, /g') | $(sed 's/ / v/' current.txt | paste -sd, - | sed 's/,/, /g') |"
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if diff -u previous.txt current.txt > model.diff; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Model name/version unchanged." | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::Model name and/or version changed compared to prior commit"
+            {
+              echo "**Model name/version changed:**"
+              echo '```diff'
+              cat model.diff
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
