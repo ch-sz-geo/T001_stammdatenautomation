@@ -14,7 +14,7 @@ permissions:
 
 env:
   XTF_FILE: data/stammdaten.xtf
-  ADOC_FILE: README.adoc          # <- path of the AsciiDoc containing the table
+  ADOC_FILE: data/readme.adoc          # <- path of the AsciiDoc containing the table
   ROW_DESCRIPTION: "Diese Datei enthält die Stammdaten des Datenmodells {model} (Version {version})."
 
 jobs:
