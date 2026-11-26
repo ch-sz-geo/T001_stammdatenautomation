@@ -7,7 +7,6 @@ on:
   pull_request:
     paths:
       - "data/stammdaten.xtf"
-  workflow_dispatch:
 
 env:
   XTF_FILE: data/stammdaten.xtf
