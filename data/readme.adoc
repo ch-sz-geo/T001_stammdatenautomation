@@ -8,29 +8,4 @@ Bei der Bewirtschaftung eines Themas gibt es Attribute, deren Werte nicht frei e
 |===
 | Modell +
 (Version) | gültig ab | Beschreibung | Link
-| SZ_Oekomorphologie_Fliessgewaesser_V2_3 +
-(2024-07-24)
-| 2026-11-26
-| Diese Datei enthält die Stammdaten des Datenmodells SZ_Oekomorphologie_Fliessgewaesser_V2_3 (Version 2024-07-24).
-| https://raw.githubusercontent.com/ch-sz-geo/T001_stammdatenautomation/ae08355c6cfadd8a87c4c6d2e6c4b1cc8327f3f8/data/stammdaten.xtf[*Datei*]
-| SZ_Oekomorphologie_Fliessgewaesser_V2_3 +
-(2024-07-24)
-| 2026-11-26
-| Diese Datei enthält die Stammdaten des Datenmodells SZ_Oekomorphologie_Fliessgewaesser_V2_3 (Version 2024-07-24).
-| https://raw.githubusercontent.com/ch-sz-geo/T001_stammdatenautomation/c818ba2a750dbb023d16a8ed1ea50bf3992dcecb/data/stammdaten.xtf[*Datei*]
-| SZ_Oekomorphologie_Fliessgewaesser_V2_1 +
-(2024-07-24)
-| 2026-11-26
-| Diese Datei enthält die Stammdaten des Datenmodells SZ_Oekomorphologie_Fliessgewaesser_V2_1 (Version 2024-07-24).
-| https://raw.githubusercontent.com/ch-sz-geo/T001_stammdatenautomation/1da7515d582bd4f44c5bf1b0780637dc8a385aca/data/stammdaten.xtf[*Datei*]
-| Beispiel_Modell_V1 +
-(2000-01-01)
-| 2001-01-01
-| Diese Datei enthält die aktuell gültigen Stammdaten für die Datenerfassung.
-| https://raw.githubusercontent.com/ch-sz-geo/A026/7d038975228cc1dadba83475fcdebe8459195881/data/Stammdaten.xtf[*Datei*]
-| Beispiel_Modell_V1 +
-(1990-01-01)
-| 1991-01-01
-| Diese Datei enthält die Stammdaten der Modellversion V1. Sie wurde aus der internen Dateiablage hochgeladen, damit die Historie über GitHub vorhanden ist. In dieser Dateiversion fehlt die Versionskennung bei der Stammdaten-BID. 
-| https://raw.githubusercontent.com/ch-sz-geo/A026/c76e0d5f58182e4473d1c72f48dc913b7ff4e5cd/data/Stammdaten.xtf[*Datei*]
 |===
