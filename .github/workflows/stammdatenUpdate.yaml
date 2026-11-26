@@ -2,9 +2,11 @@ name: Detect Stammdaten Changes
 
 on:
   push:
+    branches: [ main, master ]
     paths:
       - "data/stammdaten.xtf"
   pull_request:
+    branches: [ main, master ]
     paths:
       - "data/stammdaten.xtf"
   workflow_dispatch:
