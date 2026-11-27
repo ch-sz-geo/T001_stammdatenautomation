@@ -2,11 +2,9 @@ name: Detect Stammdaten Changes
 
 on:
   push:
-    branches: [ main, master ]
     paths:
       - "data/stammdaten.xtf"
   pull_request:
-    branches: [ main, master ]
     paths:
       - "data/stammdaten.xtf"
   workflow_dispatch:
@@ -16,8 +14,8 @@ permissions:
 
 env:
   XTF_FILE: data/stammdaten.xtf
-  ADOC_FILE: data/readme.adoc          # <- path of the AsciiDoc containing the table
-  ROW_DESCRIPTION: "Diese Datei enthält die Stammdaten des Datenmodells {model} (Version {version})."
+  ADOC_FILE: data/readme.adoc     # AsciiDoc containing the table
+  ROW_DESCRIPTION: "Diese Datei enthält die Stammdaten des Datenmodells {model}."
 
 jobs:
   compare-model:
@@ -29,23 +27,31 @@ jobs:
         with:
           fetch-depth: 2   # current + prior commit
 
-      - name: Compare model name/version with prior commit
+      - name: Compare model name / Stammdaten BID with prior commit
         id: compare
         shell: bash
         run: |
           set -euo pipefail
 
-          # Prints one "NAME VERSION" line per <MODEL> in HEADERSECTION/MODELS
-          # (namespace-agnostic, so INTERLIS 2.3 and 2.4 transfer files both work)
-          extract_models() {
+          # Prints "MODEL <name>" for every <ili:model> in the header section and
+          # "BASKET <bid>" for every <Stammdaten ili:bid="..."> (namespace-agnostic).
+          extract_info() {
             python3 -c '
           import sys
           import xml.etree.ElementTree as ET
 
-          root = ET.parse(sys.stdin).getroot()
+          def local(name):
+              return name.split("}")[-1]
+
+          root = ET.parse(sys.stdin.buffer).getroot()
           for el in root.iter():
-              if el.tag.split("}")[-1] == "MODEL":
-                  print(el.get("NAME", ""), el.get("VERSION", ""))
+              tag = local(el.tag)
+              if tag == "model" and (el.text or "").strip():
+                  print("MODEL", el.text.strip())
+              elif tag == "Stammdaten":
+                  for k, v in el.attrib.items():
+                      if local(k) == "bid":
+                          print("BASKET", v)
           '
           }
 
@@ -54,11 +60,16 @@ jobs:
             exit 1
           fi
 
-          extract_models < "$XTF_FILE" | sort > "$RUNNER_TEMP/current.txt"
+          extract_info < "$XTF_FILE" | sort > "$RUNNER_TEMP/current.txt"
+
+          if ! grep -q '^BASKET ' "$RUNNER_TEMP/current.txt"; then
+            echo "::error::No <Stammdaten ili:bid=...> found in $XTF_FILE"
+            exit 1
+          fi
 
           if git rev-parse --verify -q HEAD~1 >/dev/null \
              && git cat-file -e "HEAD~1:$XTF_FILE" 2>/dev/null; then
-            git show "HEAD~1:$XTF_FILE" | extract_models | sort > "$RUNNER_TEMP/previous.txt"
+            git show "HEAD~1:$XTF_FILE" | extract_info | sort > "$RUNNER_TEMP/previous.txt"
           else
             echo "::notice::No prior version of $XTF_FILE found; treating as new file"
             : > "$RUNNER_TEMP/previous.txt"
@@ -67,24 +78,26 @@ jobs:
           echo "Previous commit:"; cat "$RUNNER_TEMP/previous.txt"
           echo "Current commit:";  cat "$RUNNER_TEMP/current.txt"
 
+          fmt() { sed 's/^[A-Z]* //' "$1" | paste -sd, - | sed 's/,/, /g'; }
+
           {
-            echo "### XTF model comparison (\`$XTF_FILE\`)"
+            echo "### XTF comparison (\`$XTF_FILE\`)"
             echo
             echo "| | Previous (HEAD~1) | Current (HEAD) |"
             echo "|---|---|---|"
-            echo "| Model(s) | $(sed 's/ / v/' "$RUNNER_TEMP/previous.txt" | paste -sd, - | sed 's/,/, /g') | $(sed 's/ / v/' "$RUNNER_TEMP/current.txt" | paste -sd, - | sed 's/,/, /g') |"
+            echo "| Model / Stammdaten BID | $(fmt "$RUNNER_TEMP/previous.txt") | $(fmt "$RUNNER_TEMP/current.txt") |"
             echo
           } >> "$GITHUB_STEP_SUMMARY"
 
           if diff -u "$RUNNER_TEMP/previous.txt" "$RUNNER_TEMP/current.txt" > "$RUNNER_TEMP/model.diff"; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "**Model name/version is unchanged compared to the prior commit.**" >> "$GITHUB_STEP_SUMMARY"
-            echo "::error::Model name and version are unchanged compared to the prior commit (HEAD~1)"
+            echo "**Model name / Stammdaten BID is unchanged compared to the prior commit.**" >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::Model name and Stammdaten BID are unchanged compared to the prior commit (HEAD~1)"
             exit 1
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
             {
-              echo "**Model name/version changed:**"
+              echo "**Model name / Stammdaten BID changed:**"
               echo '```diff'
               cat "$RUNNER_TEMP/model.diff"
               echo '```'
@@ -98,23 +111,29 @@ jobs:
         run: |
           set -euo pipefail
 
-          export VALID_FROM="$(git show -s --format=%cs HEAD)"   # commit date, YYYY-MM-DD
           export FILE_URL="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_SHA}/${XTF_FILE}"
-          export MODELS_FILE="$RUNNER_TEMP/current.txt"
+          export INFO_FILE="$RUNNER_TEMP/current.txt"
 
           python3 - <<'PY'
           import os, re, sys
 
           adoc = os.environ["ADOC_FILE"]
           url = os.environ["FILE_URL"]
-          valid_from = os.environ["VALID_FROM"]
 
-          models = []
-          for line in open(os.environ["MODELS_FILE"], encoding="utf-8").read().splitlines():
-              if not line.strip():
-                  continue
-              parts = line.split(" ", 1)
-              models.append((parts[0], parts[1] if len(parts) > 1 else ""))
+          models, baskets = [], []
+          for line in open(os.environ["INFO_FILE"], encoding="utf-8").read().splitlines():
+              kind, _, value = line.partition(" ")
+              if kind == "MODEL" and value.strip():
+                  models.append(value.strip())
+              elif kind == "BASKET" and value.strip():
+                  baskets.append(value.strip())
+
+          # Gültigkeit = date at the end of the BID, e.g. ch.sz.a074.stammdaten.2000-01-01
+          m = re.search(r"(\d{4}-\d{2}-\d{2})$", baskets[0]) if baskets else None
+          if not m:
+              print(f"::error::No YYYY-MM-DD date at the end of BID '{baskets[0] if baskets else ''}'")
+              sys.exit(1)
+          valid_from = m.group(1)
 
           with open(adoc, encoding="utf-8") as f:
               text = f.read()
@@ -123,11 +142,8 @@ jobs:
               print("Row for this commit already present, nothing to do.")
               sys.exit(0)
 
-          model_cell = " +\n".join(f"{n} +\n({v})" for n, v in models)
-          description = os.environ["ROW_DESCRIPTION"].format(
-              model=", ".join(n for n, _ in models),
-              version=", ".join(v for _, v in models),
-          )
+          model_cell = " +\n".join(models)
+          description = os.environ["ROW_DESCRIPTION"].format(model=", ".join(models))
           row = (
               f"| {model_cell}\n"
               f"| {valid_from}\n"
@@ -141,9 +157,9 @@ jobs:
           # number of columns from [cols="..."] above the table (fallback: 4)
           ncols = 4
           if start > 0:
-              m = re.search(r'cols="([^"]*)"', lines[start - 1])
-              if m:
-                  ncols = len(m.group(1).split(","))
+              mc = re.search(r'cols="([^"]*)"', lines[start - 1])
+              if mc:
+                  ncols = len(mc.group(1).split(","))
 
           # skip the header row (it may span several lines): count cell separators
           pos, seen = start + 1, 0
@@ -164,7 +180,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
-            git commit -m "Dateibeschreibung: Modellversion aus ${XTF_FILE} ergänzt"
+            git commit -m "Dateibeschreibung: Gültigkeit aus ${XTF_FILE} ergänzt"
             git pull --rebase
             git push
           fi
